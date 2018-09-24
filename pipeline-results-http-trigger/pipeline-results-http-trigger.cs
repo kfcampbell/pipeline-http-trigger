@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using AzureFunctions.Autofac;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -12,10 +13,12 @@ using Twilio.Types;
 
 namespace pipelineresultshttptrigger
 {
-    public static class pipeline_results_http_trigger
+	[DependencyInjectionConfig(typeof(AutofacConfig))]
+    public staticass pipeline_results_http_trigger
     {
         [FunctionName("pipeline_results_http_trigger")]
-        public static IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]HttpRequest req, TraceWriter log)
+        public static IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]HttpRequest req,
+		                                TraceWriter log, [Inject] ServiceOne serviceOne)
         {         
 			string accountSid = Environment.GetEnvironmentVariable("TwilioAccountSid");
 			string authToken = Environment.GetEnvironmentVariable("TwilioAuthToken");
@@ -23,7 +26,7 @@ namespace pipelineresultshttptrigger
             TwilioClient.Init(accountSid, authToken);
 
             var message = MessageResource.Create(
-                body: "Check the oven. Your build is done!.",
+				body: serviceOne.Execute(),
 				from: new PhoneNumber(Environment.GetEnvironmentVariable("FromPhoneNumber")),
 				                      to: new PhoneNumber(Environment.GetEnvironmentVariable("ToPhoneNumber")));
 
